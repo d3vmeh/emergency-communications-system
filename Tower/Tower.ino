@@ -14,8 +14,6 @@ const int z_out = A0; /* connect z_out of module to A3 of UNO board */
 RH_RF95 driver(8, 3); // Adafruit Feather M0 with RFM95 
 
 
-
-
 int led = 13;
 
 int count = -1;
@@ -69,15 +67,23 @@ void setup()
 
 
   //For communicating with MSP432 via UART
-  Serial1.begin(115200);
+  //Serial1.begin(115200);
 }
 
 void loop()
 {
+  
 
   //Serial.println(potvalue);
   if (driver.available())
   {
+
+    if (Serial.available()){
+      Serial.println("Input");
+    }
+
+
+
     //Serial.println("avaialble");
     // Should be a message for us now   
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
@@ -114,19 +120,6 @@ void loop()
           receivedID = true;
         }
       }
-
-      // if (count == 1 && helmet.id[0] == 'I'){  
-      //   char s[len];
-      //   strcpy(s, (char*)buf);
-      //   int n;
-      //   n = atoi(s);
-      //   //Serial.println(n);
-      //   helmet.emergencyButtonState = n;
-      //   }
-      
-      
-      //Serial.println(count); // For debugging
-
 
       if (count > maxcount){
         count = -1;
