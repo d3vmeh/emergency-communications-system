@@ -126,7 +126,8 @@ void loop()
       }
 
       // Send a reply
-      uint8_t data[] = "Received data";
+      // uint8_t data[] = "Received client data";
+      uint8_t data[] = "EMERGENCY WARNING";
       driver.send(data, sizeof(data));
       driver.waitPacketSent();
       
