@@ -34,31 +34,44 @@ void setup() {
 }
 
 void loop() {
-  //Send a heartbeat message every 5 seconds.
   static unsigned long lastSend = 0;
+  
+  //Send a heartbeat message every 5 seconds.
+  /*
   if (millis() - lastSend > 5000) {
     lastSend = millis();
     char msg[64];
     snprintf(msg, sizeof(msg), "SRC:%s;TYPE:HEARTBEAT;MSG:Hello from %s", CLIENT_ID, CLIENT_ID);
     
-    //Serial.print("Sending LoRa message: ");
-    //Serial.println(msg);
-
     driver.send((uint8_t*)msg, strlen(msg));
     driver.waitPacketSent();
   }
+  */
+  
+  //Listen for messages from the Raspberry Pi via Serial
+  if (Serial.available()) {
+    String piMessage = Serial.readStringUntil('\n');
+    piMessage.trim();
+    if (piMessage.length() > 0) {
+      Serial.print("Sending Pi message via LoRa: ");
+      Serial.println(piMessage);
 
-  //Listen for messages from Tower
+      driver.send((uint8_t*)piMessage.c_str(), piMessage.length());
+      driver.waitPacketSent();
+    }
+  }
+
+  //Listen for messages from the Tower
   if (driver.available()) {
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
     uint8_t len = sizeof(buf);
     if (driver.recv(buf, &len)) {
-      buf[len] = 0; //Null-terminate the received message
+      buf[len] = 0; 
 
-      //Check for an exclusion field ("EXC:") in the received message. If found and it matches this client's ID, ignore the message
+      //Check for an exclusion field ("EXC:") in the received message
       char *excPtr = strstr((char*)buf, "EXC:");
       if (excPtr != NULL) {
-        excPtr += 4;  //Move pointer past "EXC:"
+        excPtr += 4;  
         char excID[10];
         int i = 0;
         while (excPtr[i] != ';' && excPtr[i] != '\0' && i < sizeof(excID) - 1) {
@@ -67,7 +80,6 @@ void loop() {
         }
         excID[i] = '\0';
         if (strcmp(excID, CLIENT_ID) == 0) {
-          //This message originally came from this client; ignore it
           return;
         }
       }
@@ -75,22 +87,12 @@ void loop() {
       Serial.print("Received LoRa message: ");
       Serial.println((char*)buf);
 
-      //Forward to Raspberry Pi via USB Serial
+      //Forward message to the Raspberry Pi
       Serial.println((char*)buf);
 
       digitalWrite(LED_BUILTIN, HIGH);
       delay(50);
       digitalWrite(LED_BUILTIN, LOW);
-
-      //Confirmation code
-      /*
-      // driver.stopListening();
-      // char confirmMsg[32];
-      // snprintf(confirmMsg, sizeof(confirmMsg), "SRC:%s;CONFIRMED", CLIENT_ID);
-      // driver.send((uint8_t*)confirmMsg, strlen(confirmMsg));
-      // driver.waitPacketSent();
-      // driver.startListening();
-      */
     }
   }
 
