@@ -1,20 +1,28 @@
 import serial
 import time
 
-ser = serial.Serial("/dev/ttyACM0", 9600, timeout=1)
-ser.setDTR(False)
-time.sleep(1)
-ser.reset_input_buffer()
-ser.setDTR(True)
-time.sleep(2)
-#IF THE SERIAL PORT WONT WORK, RESET THE ARDUINO WHILE IT IS CONNECTED TO THE PI
-while True:
-    from_arduino = ser.readline().decode(errors='ignore').strip()  # Read full message, decode, and clean up
-    if from_arduino:
-        print(f"Arduino says: {from_arduino}")
-        #print("Responding to Arduino")
-        #ser.write(b"Hello Arduino\n")  # Send bytes with newline
-        print("\n\n")
-    #time.sleep(1)  # Avoid flooding
+def main():
+    ser = serial.Serial("/dev/ttyACM0", 115200, timeout=1)
+    time.sleep(2) 
 
+    print("Raspberry Pi interface ready.")
+    print("Type your message and press Enter to send to the Tower:")
+
+    try:
+        while True:
+            while ser.in_waiting:
+                incoming = ser.readline().decode('utf-8', errors='ignore').strip()
+                if incoming:
+                    print("From Arduino:", incoming)
+
+            user_message = input("Message to Tower: ")
+            if user_message:
+                ser.write((user_message + "\n").encode('utf-8'))
+    except KeyboardInterrupt:
+        print("Exiting...")
+    finally:
+        ser.close()
+
+if __name__ == "__main__":
+    main()
 
